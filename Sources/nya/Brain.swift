@@ -268,7 +268,9 @@ final class Brain {
         if Cfg.pcc { return "token counts are on-device only" }
         let i = (try? await on.tokenCount(for: Instructions(Cfg.sys))) ?? 0
         let t = (try? await on.tokenCount(for: tools)) ?? 0
-        let h = (try? await on.tokenCount(for: Array(ses.transcript))) ?? 0
+        // the transcript carries the instructions entry too, which would double-count it
+        let hist = ses.transcript.filter { if case .instructions = $0 { return false }; return true }
+        let h = (try? await on.tokenCount(for: Array(hist))) ?? 0
         return "fixed cost — instructions \(i) + tools \(t) = \(i + t) tok, history \(h) of \(window)"
     }
 

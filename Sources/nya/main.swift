@@ -43,7 +43,8 @@ func help() {
 
 func status() {
     pen.line("  " + C.t(C.lilac, "fm  ") + C.t(C.ash, "\(on1())"))
-    pen.line("  " + C.t(C.bubble, "pcc ") + C.t(C.ash, "\(b.pc.availability) · quota \(b.pc.quotaUsage.status)"))
+    let q = String("\(b.pc.quotaUsage.status)".prefix { $0 != "(" })
+    pen.line("  " + C.t(C.bubble, "pcc ") + C.t(C.ash, "\(b.pc.availability) · quota \(q)"))
     pen.line("  " + C.t(C.mint, "now ") + C.t(C.ash, "\(Cfg.pcc ? "pcc" : "fm") · window \(b.window) · used \(b.used) (\(b.gen) generated, \(b.reas) reasoning)"))
 }
 func on1() -> String { "\(SystemLanguageModel.default.availability)" }
