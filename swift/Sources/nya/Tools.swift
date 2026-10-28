@@ -94,7 +94,8 @@ struct Fn: Tool {
         }
         let key = "\(id.name)|\(a.preview)"
         let out = try await body(a)
-        if out.contains("not found") || out.contains("failed") || out.contains("ambiguous") || out.contains("declined") {
+        let bad = ["not found", "no such file", "failed", "ambiguous", "declined", "no matches", "already applied"]
+        if bad.contains(where: out.contains) {
             repeatCount[key, default: 0] += 1
             if repeatCount[key]! >= 2 {
                 Pen.shared.tool(id.name, a.preview, "repeated failure — telling model to stop", bad: true)
@@ -173,6 +174,8 @@ let TOOLS: [Fn] = [
     },
 
     Fn("grep|Regex search over files. Returns path:line:text.|pattern:s:regex,path:s?:dir (default .),fi:s?:filename filter like *.swift") { a in
+        if a.s("pattern").isEmpty { return "failed: grep needs a pattern" }
+        if !FileManager.default.fileExists(atPath: abs(a.s("path", "."))) { return "no such file or directory: \(a.s("path", "."))" }
         var argv = ["/usr/bin/grep", "-rnI", "-E", a.s("pattern")]
         if let f = a.so("fi") { argv += ["--include", f] }
         argv += [abs(a.s("path", "."))]
@@ -183,7 +186,14 @@ let TOOLS: [Fn] = [
     },
 
     Fn("glob|Files matching a name pattern, newest first.|pattern:s:like *.swift,path:s?:dir (default .)") { a in
-        let out = shell(["/usr/bin/find", abs(a.s("path", ".")), "-name", a.s("pattern"),
+        var pat = a.s("pattern"), dir = a.s("path", ".")
+        if pat.isEmpty { pat = "*" }
+        if pat.contains("/") { // a pattern with slashes is a path: split it, -name can never match one
+            dir = (dir as NSString).appendingPathComponent((pat as NSString).deletingLastPathComponent)
+            pat = (pat as NSString).lastPathComponent
+        }
+        if !FileManager.default.fileExists(atPath: abs(dir)) { return "no such file or directory: \(dir)" }
+        let out = shell(["/usr/bin/find", abs(dir), "-name", pat,
                          "-not", "-path", "*/.git/*", "-not", "-path", "*/node_modules/*", "-type", "f"], ms: 15_000)
         let fs = out.components(separatedBy: "\n").filter { !$0.isEmpty }.map(rel)
         if fs.isEmpty { return "no files match \(a.s("pattern"))" }

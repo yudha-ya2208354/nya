@@ -82,6 +82,7 @@ final class Brain {
 
     // ── one turn: FM/PCC runs the tool loop itself, so no hand-rolled agent loop
     func turn(_ text: String, retried: Bool = false) async {
+        repeatCount = [:]
         let ctx = ContextOptions(reasoningLevel: Cfg.pcc ? Cfg.think : nil)
         var printed = "", live = false
         Pen.shared.raw("")

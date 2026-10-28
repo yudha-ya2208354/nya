@@ -1,6 +1,9 @@
-# compiled harness, build leftovers, test scratch
-/nya
-/out/
-/.build/
-/demo/gate.txt
+# compiled harnesses, build leftovers, test scratch
+/swift/nya
+/swift/out/
+/swift/.build/
+/swift/demo/gate.txt
+/python/shim
+__pycache__/
 *.swiftmodule
+/demo/gate.txt
