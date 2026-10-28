@@ -1,0 +1,6 @@
+# compiled harness, build leftovers, test scratch
+/nya
+/out/
+/.build/
+/demo/gate.txt
+*.swiftmodule

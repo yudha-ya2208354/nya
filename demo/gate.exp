@@ -1,0 +1,55 @@
+#!/usr/bin/expect -f
+# pty test: does the y/n/a gate block a write, and does /yolo then let it through?
+log_user 1
+set timeout 240
+match_max 400000
+cd [lindex $argv 0]
+spawn ./nya
+
+# wait for our own echo, so we never mistake the prompt printed before a turn for the one after it
+proc ask {line} {
+  send "$line\r"
+  expect -exact "$line"
+}
+
+# answer every gate prompt in this turn with n, until the REPL prompt returns
+proc to_prompt {what} {
+  expect {
+    -re {lways} {
+      send "n"
+      exp_continue
+    }
+    -re {⌒>} {}
+    timeout {
+      puts "\nFAIL \[$what\]: timed out"
+      exit 1
+    }
+    eof {
+      puts "\nFAIL \[$what\]: process died"
+      exit 1
+    }
+  }
+}
+
+to_prompt "boot"
+ask "use write to put the word hi into demo/gate.txt"
+to_prompt "declined write"
+if {![file exists demo/gate.txt]} {
+  puts "OK \[gate blocked the write\]"
+} else {
+  puts "FAIL \[write happened anyway\]"
+  exit 1
+}
+ask "/yolo"
+to_prompt "yolo on"
+ask "use write to put the word hi into demo/gate.txt"
+to_prompt "yolo write"
+if {[file exists demo/gate.txt]} {
+  puts "OK \[/yolo let it through\]: [exec cat demo/gate.txt]"
+} else {
+  puts "FAIL \[/yolo did nothing\]"
+  exit 1
+}
+send "/quit\r"
+expect eof
+puts "DONE"
